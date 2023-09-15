@@ -39,21 +39,20 @@ title('Power Spectral Density (PSD) of Noisy ECG');
 %------MA(3) filter implementation with a customised script------
 
 ma3ECG_1 = moving_average_filter(3,nECG);
-
-group_delay = 3/2;
-compensated_time_axis = time_axis - group_delay*T;
+group_delay = 1;  %derivation of group delay is in the report
+compensated_time_axis = time_axis(1:end-group_delay);
+ma3ECG_1(1:group_delay) = [];
 
 figure;
 plot(time_axis, nECG);
-hold on;  
-plot(time_axis, ma3ECG_1, 'g--');
 hold on;  
 plot(compensated_time_axis, ma3ECG_1, 'r');
 xlabel('Time (seconds)');
 ylabel('Amplitude (mv)');
 title('nECG and scripted MA(3)');
-legend('nECG', 'ma3ECG_1','compensated');
+legend('nECG', 'ma3ECG_1');
 hold off;
+grid on;
 
 
 %------Compare PSDs------
@@ -77,17 +76,65 @@ numerator = (1/windowSize)*ones(1,windowSize);
 denominator = 1;
 
 ma3ECG_2 = filter(numerator,denominator,nECG);
+delay = mean(grpdelay(numerator, denominator, 500, fs));
+compensated_time_axis = time_axis(1:end-delay);
+ma3ECG_2_copy = ma3ECG_2;
+ma3ECG_2(1:delay) = [];
+
 
 figure;
-plot(time_axis, nECG);
+plot(compensated_time_axis, ECG_template(1:end-delay), 'b');
 hold on;  
-plot(time_axis, ma3ECG_2, 'r');
+plot(compensated_time_axis, nECG(1:end-delay), 'g');
+hold on;
+plot(compensated_time_axis, ma3ECG_2, 'r' )
 xlabel('Time (seconds)');
 ylabel('Amplitude (mv)');
-title('nECG and builtin MA(3)');
-legend('nECG', 'ma3ECG_2');
+title('ECG_template, nECG and comp. MA(3)');
+legend('Template','nECG', 'ma3ECG_2');
+hold off;
+
+%------- FVT tool ----------------------------
+fvtool(numerator,denominator);
+
+% for the MA(10)-----------------------------
+windowSize = 10; 
+numerator = (1/windowSize)*ones(1,windowSize);
+denominator = 1;
+fvtool(numerator,denominator);
+
+ma10ECG = filter(numerator,denominator,nECG);
+delay = round(mean(grpdelay(numerator, denominator, 500, fs)));
+ma10ECG_copy = ma10ECG;
+
+compensated_time_axis = time_axis(1:end-delay);
+ma10ECG(1:delay) = [];
+ma3ECG_2_copy(1:delay) = [];
+
+
+figure;
+plot(compensated_time_axis, ECG_template(1:end-delay), 'b');
+hold on;  
+plot(compensated_time_axis, nECG(1:end-delay), 'g');
+hold on;
+plot(compensated_time_axis, ma3ECG_2_copy, 'r' )
+hold on;
+plot(compensated_time_axis, ma10ECG, 'm' )
+xlabel('Time (seconds)');
+ylabel('Amplitude (mv)');
+title('ECG_template, nECG and comp. MA(10)');
+legend('Template','nECG', 'ma3ECG_2', 'ma3ECG_10');
 hold off;
 
 
+%-------------------Optimum MA(N) filter order-----------------
 
+for windowSize = 1:10
+    numerator = (1/windowSize)*ones(1,windowSize);
+    denominator = 1;
 
+    filtered_signal = filter(numerator,denominator,nECG);
+    delay = round(mean(grpdelay(numerator, denominator, 500, fs)));
+    ma10ECG_copy = ma10ECG;
+
+end
