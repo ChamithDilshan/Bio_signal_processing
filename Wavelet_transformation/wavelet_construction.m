@@ -11,7 +11,6 @@ s = 0.01:0.1:2;     % Values of scaling factor
 wavelt = -0.8671 .* exp(-0.5*t.^2).*(t.^2-1);
 
 
-
 figure;
 plot(t,wavelt,'b');
 xlabel("t (s)");
@@ -30,15 +29,10 @@ for i = 1:5
         title_string = sprintf("Scaling factor = %.2f",s(k));
         title(title_string);
         grid on; 
-        disp(sprintf("When scaling factor is %.2f, mean = %.2f , energy = %.2f",s(k),mean(s_wavelt),round(trapz(t, wavelt.^2),2)));
+        fprintf("When scaling factor is %.2f, mean = %.2f , energy = %.2f\n",s(k),mean(s_wavelt),round(trapz(t, wavelt.^2),2));
         k=k+1;
     end 
 end
-
-
-
-
-
 
 
 % Generating spectra of wavelets
@@ -70,10 +64,34 @@ for i = 1:5
 end
 
 
-% % Ploting the spectrogram
-% h = pcolor();
-% set(h, 'EdgeColor', 'none');
-% colormap jet
-% xlabel('Time (s)')
-% ylabel('Scale')
-% title('Spectrogram')
+%% . Continuous Wavelet Decomposition
+close all
+
+scales = 0.01:0.01:2; 
+t_new = (1:3*N)/fs;
+
+x_n = [sin(0.5*pi*t_new(1:3*N/2-1)), sin(1.5*pi*t_new(3*N/2:end))];
+
+
+figure;
+stem(t_new,x_n);
+xlabel('Time');
+ylabel('Magnitude')
+
+scales = 0.01:0.01:2;
+convolutions = zeros(length(scales),length(x_n));
+
+for i = 1:length(scales)
+    s_wavelt = (1/sqrt(scales(i)))* (-0.8671 .* exp(-0.5*(t/scales(i)).^2).*((t/scales(i)).^2-1));
+    convolutions(i,:) = conv(x_n, s_wavelt, 'same');
+end
+
+
+% Ploting the spectrogram
+figure;
+h = pcolor(t_new,scales,convolutions);
+set(h, 'EdgeColor', 'none');
+colormap jet
+xlabel('Time (s)')
+ylabel('Scale')
+title('Spectrogram')
