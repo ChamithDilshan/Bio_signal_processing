@@ -4,6 +4,7 @@ clearvars; close all; clc;
 
 n = 0:1023;
 fs = 512;
+%% 
 t = n/fs;
 
 x1 = [2*sin(20*pi*(0:511)/fs)+sin(80*pi*(0:511)/fs) 0.5*sin(40*pi*(512:1023)/fs)+sin(60*pi*(512:1023)/fs)]; %Construction of x1
@@ -25,6 +26,7 @@ for i=0:1023
     end
 end
 
+rng(10); %Seed
 y1 = awgn(x1,10,"measured");  %Adding noise to signals
 y2 = awgn(x2,10,"measured");
 
@@ -110,5 +112,118 @@ hold on;
 plot(t,reconstructed_haar_y2);
 legend("y_2[n]","Reconstructed y_2 with haar",'Location', 'SouthEast');
 
-%% 
+%% Signal Denoising with DWT
 
+clc;
+
+% ------------------------------------------------For the signal y1 with db9------------------------------------------------
+
+magnitude_db9_y1 = abs(c_db9_y1); %get magnitudes
+[magnitude_db9_y1_sorted, idx] = sort(magnitude_db9_y1, 'descend'); % Sort the coefficients and their magnitudes in descending order
+coefficients_db9_y1_sorted = c_db9_y1(idx);
+
+threshold_value = 1;
+thresholded_coefficients = c_db9_y1;
+thresholded_coefficients(abs(c_db9_y1) < threshold_value) = 0;
+reconstructed_signal_db9_y1 = waverec(thresholded_coefficients, l_db9_y1, 'db9');
+
+fprintf("Signal y_1[n], db9 wavelet ----> RMSE = %.3f\n",mean((x1-reconstructed_signal_db9_y1).^2));
+
+% ------------------------------------------------For the signal y2 with db9------------------------------------------------
+
+magnitude_db9_y2 = abs(c_db9_y2); %get magnitudes
+[magnitude_db9_y2_sorted, idx] = sort(magnitude_db9_y2, 'descend'); % Sort the coefficients and their magnitudes in descending order
+coefficients_db9_y2_sorted = c_db9_y2(idx);
+
+threshold_value = 1.7;
+thresholded_coefficients = c_db9_y2;
+thresholded_coefficients(abs(c_db9_y2) < threshold_value) = 0;
+reconstructed_signal_db9_y2 = waverec(thresholded_coefficients, l_db9_y2, 'db9');
+
+fprintf("Signal y_2[n], db9 wavelet ----> RMSE = %.3f\n",mean((x2-reconstructed_signal_db9_y2).^2));
+
+% ------------------------------------------------For the signal y1 with haar------------------------------------------------
+
+magnitude_haar_y1 = abs(c_haar_y1); %get magnitudes
+[magnitude_haar_y1_sorted, idx] = sort(magnitude_haar_y1, 'descend'); % Sort the coefficients and their magnitudes in descending order
+coefficients_haar_y1_sorted = c_haar_y1(idx);
+
+threshold_value = 0.1;
+thresholded_coefficients = c_haar_y1;
+thresholded_coefficients(abs(c_haar_y1) < threshold_value) = 0;
+reconstructed_signal_haar_y1 = waverec(thresholded_coefficients, l_haar_y1, 'haar');
+
+fprintf("Signal y_1[n], haar wavelet ----> RMSE = %.3f\n",mean((x1-reconstructed_signal_haar_y1).^2));
+
+% ------------------------------------------------For the signal y2 with haar------------------------------------------------
+
+magnitude_haar_y2 = abs(c_haar_y2); %get magnitudes
+[magnitude_haar_y2_sorted, idx] = sort(magnitude_haar_y2, 'descend'); % Sort the coefficients and their magnitudes in descending order
+coefficients_haar_y2_sorted = c_haar_y2(idx);
+
+threshold_value = 2.1;
+thresholded_coefficients = c_haar_y2;
+thresholded_coefficients(abs(c_haar_y2) < threshold_value) = 0;
+reconstructed_signal_haar_y2 = waverec(thresholded_coefficients, l_haar_y2, 'haar');
+
+fprintf("Signal y_2[n], haar wavelet ----> RMSE = %.3f\n",mean((x2-reconstructed_signal_haar_y2).^2));
+
+
+
+%-----------Plotting stems for coefficients-----------
+figure;
+
+subplot(2, 2, 1);
+stem(coefficients_db9_y1_sorted, 'Marker', 'none');
+title('Magnitude of db9 Wavelet Coefficients for y1 (Descending Order)');
+xlabel('Coefficient Index');
+ylabel('Magnitude');
+
+subplot(2, 2, 2);
+stem(coefficients_db9_y2_sorted, 'Marker', 'none');
+title('Magnitude of db9 Wavelet Coefficients for y2 (Descending Order)');
+xlabel('Coefficient Index');
+ylabel('Magnitude');
+
+subplot(2, 2, 3);
+stem(coefficients_haar_y1_sorted, 'Marker', 'none');
+title('Magnitude of haar Wavelet Coefficients for y1 (Descending Order)');
+xlabel('Coefficient Index');
+ylabel('Magnitude');
+
+subplot(2, 2, 4);
+stem(coefficients_haar_y2_sorted, 'Marker', 'none');
+title('Magnitude of haar Wavelet Coefficients for y2 (Descending Order)');
+xlabel('Coefficient Index');
+ylabel('Magnitude');
+
+%-----------Plotting denoised signals-----------
+figure;
+
+subplot(2, 2, 1);
+plot(x1);
+hold on;
+plot(reconstructed_signal_db9_y1);
+title("y_1[n] denoising with db9");
+legend("x_1[n]", "Denoised");
+
+subplot(2, 2, 2);
+plot(x2);
+hold on;
+plot(reconstructed_signal_db9_y2);
+title("y_2[n] denoising with db9");
+legend("x_2[n]", "Denoised");
+
+subplot(2, 2, 3);
+plot(x1);
+hold on;
+plot(reconstructed_signal_haar_y1);
+title("y_1[n] denoising with haar");
+legend("x_1[n]", "Denoised");
+
+subplot(2, 2, 4);
+plot(x2);
+hold on;
+plot(reconstructed_signal_haar_y2);
+title("y_2[n] denoising with haar");
+legend("x_2[n]", "Denoised");
