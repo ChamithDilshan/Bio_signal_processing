@@ -227,3 +227,95 @@ hold on;
 plot(reconstructed_signal_haar_y2);
 title("y_2[n] denoising with haar");
 legend("x_2[n]", "Denoised");
+
+
+%% Signal Compression with DWT
+
+clearvars;
+
+load("ECGsig.mat");
+
+fs = 257;
+t = (0:length(aVR)-1)/fs;
+
+figure;
+plot(t,aVR);
+xlabel("Time");
+ylabel("Amplitude");
+title("Given _aV_R ECG");
+
+[c_db9, l_db9] = wavedec(aVR,5, 'db9');  %decomposition with 5 layers
+[c_haar, l_haar] = wavedec(aVR,5, 'haar');
+
+magnitude_db9 = abs(c_db9); %get magnitudes
+[magnitude_db9_sorted, idx_db9] = sort(magnitude_db9, 'descend'); % Sort the coefficients and their magnitudes in descending order
+coefficients_db9_sorted = c_db9(idx_db9);
+
+magnitude_haar = abs(c_haar); 
+[magnitude_haar_sorted, idx_haar] = sort(magnitude_haar, 'descend'); 
+coefficients_haar_sorted = c_haar(idx_haar);
+
+%Calculate the energy for db9
+energy_db9 = zeros(size(coefficients_db9_sorted));
+for coefs = 1:length(coefficients_db9_sorted)
+    if coefs == 1
+        energy_db9(coefs) = coefficients_db9_sorted(coefs)^2;
+    else
+        energy_db9(coefs) = coefficients_db9_sorted(coefs)^2 + energy_db9(coefs-1);
+    end
+end
+energy_db9 = energy_db9 / max(energy_db9);
+
+index_99_db9 = find(energy_db9 >= 0.99,1); %find the number of coefficients for 99% energy
+
+
+%Calculate the energy for haar
+energy_haar = zeros(size(coefficients_haar_sorted));
+for coefs = 1:length(coefficients_haar_sorted)
+    if coefs == 1
+        energy_haar(coefs) = coefficients_haar_sorted(coefs)^2;
+    else
+        energy_haar(coefs) = coefficients_haar_sorted(coefs)^2 + energy_haar(coefs-1);
+    end
+end
+energy_haar = energy_haar / max(energy_haar);
+
+index_99_haar = find(energy_haar >= 0.99,1); %find the number of coefficients for 99% energy
+
+figure;
+subplot(1,2,1);
+plot(energy_db9); hold on;
+plot(index_99_db9,energy_db9(index_99_db9),'xr');
+ylim([0 1.1]); xlabel("Number of coefficients"); ylabel("Energy percentage"); title("Energy vs number of coefficients");
+text(index_99_db9, energy_db9(index_99_db9), sprintf('(%d,%.2f)', index_99_db9,energy_db9(index_99_db9)));
+
+subplot(1,2,2);
+plot(energy_haar); hold on;
+plot(index_99_haar,energy_haar(index_99_haar),'xr');
+ylim([0 1.1]); xlabel("Number of coefficients"); ylabel("Energy percentage"); title("Energy vs number of coefficients");
+text(index_99_haar, energy_haar(index_99_haar), sprintf('(%d,%.2f)', index_99_haar,energy_haar(index_99_haar)));
+
+% Reconstruction after compression
+new_coefficients_db9 = zeros(size(coefficients_db9_sorted));
+for i = 1:index_99_db9
+    new_coefficients_db9(idx_db9(i)) = coefficients_db9_sorted(i);
+end
+compressed_db9 = waverec(new_coefficients_db9, l_db9, 'db9');
+
+% Reconstruction after compression
+new_coefficients_haar = zeros(size(coefficients_haar_sorted));
+for i = 1:index_99_haar
+    new_coefficients_haar(idx_haar(i)) = coefficients_haar_sorted(i);
+end
+compressed_haar = waverec(new_coefficients_haar, l_haar, 'haar');
+
+figure;
+plot(aVR);
+hold on;
+plot(compressed_haar);
+hold on;
+plot(compressed_db9);
+legend("_aV_R","Compressed using haar","Compressed using db9");
+
+fprintf("With haar wavelet ----> RMSE = %.7f , compression ratio = %d:1\n",mean((aVR-compressed_haar).^2),round(length(aVR)/index_99_haar));
+fprintf("With db9 wavelet ----> RMSE = %.7f , compression ratio = %d:1\n",mean((aVR-compressed_db9).^2),round(length(aVR)/index_99_db9));
