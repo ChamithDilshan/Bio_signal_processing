@@ -120,7 +120,7 @@ clc;
 
 magnitude_db9_y1 = abs(c_db9_y1); %get magnitudes
 [magnitude_db9_y1_sorted, idx] = sort(magnitude_db9_y1, 'descend'); % Sort the coefficients and their magnitudes in descending order
-coefficients_db9_y1_sorted = c_db9_y1(idx);
+coefficients_db9_y1_sorted = c_db9_y1(idx);     
 
 threshold_value = 1;
 thresholded_coefficients = c_db9_y1;
@@ -286,13 +286,13 @@ figure;
 subplot(1,2,1);
 plot(energy_db9); hold on;
 plot(index_99_db9,energy_db9(index_99_db9),'xr');
-ylim([0 1.1]); xlabel("Number of coefficients"); ylabel("Energy percentage"); title("Energy vs number of coefficients");
+ylim([0 1.1]); xlabel("Number of coefficients"); ylabel("Energy percentage"); title("Energy vs number of coefficients for db9");
 text(index_99_db9, energy_db9(index_99_db9), sprintf('(%d,%.2f)', index_99_db9,energy_db9(index_99_db9)));
 
 subplot(1,2,2);
 plot(energy_haar); hold on;
 plot(index_99_haar,energy_haar(index_99_haar),'xr');
-ylim([0 1.1]); xlabel("Number of coefficients"); ylabel("Energy percentage"); title("Energy vs number of coefficients");
+ylim([0 1.1]); xlabel("Number of coefficients"); ylabel("Energy percentage"); title("Energy vs number of coefficients for haar");
 text(index_99_haar, energy_haar(index_99_haar), sprintf('(%d,%.2f)', index_99_haar,energy_haar(index_99_haar)));
 
 % Reconstruction after compression
@@ -316,6 +316,8 @@ plot(compressed_haar);
 hold on;
 plot(compressed_db9);
 legend("_aV_R","Compressed using haar","Compressed using db9");
+xlabel("Time");
+ylabel("Magnitude")
 
 fprintf("With haar wavelet ----> RMSE = %.7f , compression ratio = %d:1\n",mean((aVR-compressed_haar).^2),round(length(aVR)/index_99_haar));
 fprintf("With db9 wavelet ----> RMSE = %.7f , compression ratio = %d:1\n",mean((aVR-compressed_db9).^2),round(length(aVR)/index_99_db9));

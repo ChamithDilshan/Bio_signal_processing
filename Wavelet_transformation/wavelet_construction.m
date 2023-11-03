@@ -23,9 +23,11 @@ for i = 1:5
     figure;
     for j = 1:4
         subplot(1,4,j);
-        s_wavelt = (1/sqrt(s(k)))* (-0.8671 .* exp(-0.5*(t/s(k)).^2).*((t/s(k)).^2-1));
+        s_wavelt = (1/sqrt(s(k)))* (-0.8671 .* exp(-0.5*(t/s(k)).^2).*((t/s(k)).^2-1));  %Generating scales (daughter wavelets)
         plot(t, s_wavelt);
         ylim([-4,8.5]);
+        xlabel("t (s)");
+        ylabel('Magnitude')
         title_string = sprintf("Scaling factor = %.2f",s(k));
         title(title_string);
         grid on; 
@@ -74,7 +76,7 @@ x_n = [sin(0.5*pi*t_new(1:3*N/2-1)), sin(1.5*pi*t_new(3*N/2:end))];
 
 
 figure;
-stem(t_new,x_n);
+stem(t_new,x_n, 'Marker', 'none');
 xlabel('Time');
 ylabel('Magnitude')
 
@@ -83,7 +85,7 @@ convolutions = zeros(length(scales),length(x_n));
 
 for i = 1:length(scales)
     s_wavelt = (1/sqrt(scales(i)))* (-0.8671 .* exp(-0.5*(t/scales(i)).^2).*((t/scales(i)).^2-1));
-    convolutions(i,:) = conv(x_n, s_wavelt, 'same');
+    convolutions(i,:) = conv(x_n, s_wavelt, 'same');  %performing convolutions
 end
 
 
@@ -95,3 +97,4 @@ colormap jet
 xlabel('Time (s)')
 ylabel('Scale')
 title('Spectrogram')
+colorbar
